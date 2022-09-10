@@ -2,7 +2,6 @@
 import { SPRITESHEET_NAMESPACE } from "./constants";
 import { Props, Optimize } from "./Props";
 import getFromService from "./resolver";
-import { optimize as optimizeSVGNative } from "svgo";
 
 // Adapted from https://github.com/developit/htmlParser
 const splitAttrsTokenizer = /([a-z0-9_\:\-]*)\s*?=\s*?(['"]?)(.*?)\2\s+/gim;
@@ -21,66 +20,10 @@ const splitAttrs = (str) => {
   }
   return res;
 };
-
-function optimizeSvg(
-  contents: string,
-  name: string,
-  options: Optimize
-): string {
-  return optimizeSVGNative(contents, {
-    plugins: [
-      "removeDoctype",
-      "removeXMLProcInst",
-      "removeComments",
-      "removeMetadata",
-      "removeXMLNS",
-      "removeEditorsNSData",
-      "cleanupAttrs",
-      "minifyStyles",
-      "convertStyleToAttrs",
-      {
-        name: "cleanupIDs",
-        params: { prefix: `${SPRITESHEET_NAMESPACE}:${name}` },
-      },
-      "removeRasterImages",
-      "removeUselessDefs",
-      "cleanupNumericValues",
-      "cleanupListOfValues",
-      "convertColors",
-      "removeUnknownsAndDefaults",
-      "removeNonInheritableGroupAttrs",
-      "removeUselessStrokeAndFill",
-      "removeViewBox",
-      "cleanupEnableBackground",
-      "removeHiddenElems",
-      "removeEmptyText",
-      "convertShapeToPath",
-      "moveElemsAttrsToGroup",
-      "moveGroupAttrsToElems",
-      "collapseGroups",
-      "convertPathData",
-      "convertTransform",
-      "removeEmptyAttrs",
-      "removeEmptyContainers",
-      "mergePaths",
-      "removeUnusedNS",
-      "sortAttrs",
-      "removeTitle",
-      "removeDesc",
-      "removeDimensions",
-      "removeStyleElement",
-      "removeScriptElement",
-    ],
-  }).data;
-}
-
 const preprocessCache = new Map();
-export function preprocess(contents: string, name: string, { optimize }) {
+export function preprocess(contents: string) {
   if (preprocessCache.has(contents)) {
     return preprocessCache.get(contents);
-  }
-  if (optimize) {
-    contents = optimizeSvg(contents, name, optimize);
   }
   domParserTokenizer.lastIndex = 0;
   let result = contents;
@@ -212,7 +155,7 @@ ${contents}`
     }
   }
 
-  const { innerHTML, defaultProps } = preprocess(svg, key, { optimize });
+  const { innerHTML, defaultProps } = preprocess(svg);
 
   if (!innerHTML.trim()) {
     throw new Error(`Unable to parse "${filepath}"!`);
